@@ -1,11 +1,13 @@
 import json
 import random
 from statistics import median
-from movie_storage import get_movies, save_movies
-from storage_json import StorageJson
+from storage.istorage import IStorage
+from storage.storage_json import StorageJson
 from web_generator import generate_website
 
-JSON_FILE = "data.json"
+
+
+JSON_FILE = "data/data.json"
 
 
 def load_movies_from_storage():

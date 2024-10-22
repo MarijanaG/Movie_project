@@ -6,7 +6,7 @@ import json
 
 def get_movies():
     try:
-        with open('data.json', 'r') as file:
+        with open('data/data.json', 'r') as file:
             movies = json.load(file)
     except FileNotFoundError:
         movies = {}  
@@ -17,7 +17,7 @@ def get_movies():
 
 
 def save_movies(movies):
-    with open('data.json', 'w') as file:
+    with open('data/data.json', 'w') as file:
         json.dump(movies, file, indent=4)
     print("Movies data saved successfully.")
 

@@ -1,11 +1,26 @@
 import requests
+import os
+from dotenv import load_dotenv
+import movie_storage
+from movies import storage
+
+# Load environment variables from .env file
+load_dotenv()
+
 class MovieApp:
     def __init__(self, storage):
-        """Initialize the app with the given storage type."""
+        """Initialize the app with the given storage type.
+
+        Args:
+            storage: An instance of the storage class for managing movies.
+        """
         self._storage = storage
 
     def _command_list_movies(self):
-        """List all movies in the storage."""
+        """List all movies in the storage.
+
+        Retrieves movies from the storage and displays their title, rating, and year.
+        """
         movies = self._storage.list_movies()
         if movies:
             for title, details in movies.items():
@@ -14,13 +29,22 @@ class MovieApp:
             print("No movies found.")
 
     def _command_add_movie(self):
-        """Add a movie by fetching data from the OMDb API."""
-        api_key = "73a25159"
+        """Add a movie by fetching data from the OMDb API.
+
+        Prompts the user for a movie title, fetches its details from the OMDb API,
+        and stores the movie details in the storage system.
+        """
+        api_key = os.getenv("OMDB_API_KEY")
+        if not api_key:
+            print("Error: API key not found. Please set OMDB_API_KEY in your .env file.")
+            return
+
         title = input("Enter the movie title: ")
         url = f"http://www.omdbapi.com/?apikey={api_key}&t={title}"
 
         try:
             response = requests.get(url)
+            response.raise_for_status()
             data = response.json()
 
             # Handle if movie not found
@@ -41,35 +65,17 @@ class MovieApp:
                 rating = None  # Handle case where rating is not available
 
             # Store movie details in your storage
-            self._storage.add_movie(movie_title, year, rating,
-                                    poster)  # Ensure this method exists in your storage class
+            self._storage.add_movie(movie_title, year, rating, poster)
             print(f"Movie '{movie_title}' added successfully!")
 
         except requests.exceptions.RequestException as e:
             print(f"Error: Could not access the API. {e}")
 
-    def run(self):
-        """Run the main loop for the movie app."""
-        while True:
-            print("\nMenu:")
-            print("1. List Movies")
-            print("2. Add Movie")
-            print("3. Quit")
-
-            choice = input("Enter your choice: ")
-
-            if choice == "1":
-                self._command_list_movies()
-            elif choice == "2":
-                self._command_add_movie()
-            elif choice == "3":
-                print("Exiting the app.")
-                break
-            else:
-                print("Invalid choice, try again.")
-
-
     def _generate_website(self):
+        """Generate an HTML file to display the list of movies.
+
+        Creates a simple HTML page containing the list of movies stored in the system.
+        """
         movies = self._storage.list_movies()
 
         # HTML template
@@ -129,12 +135,16 @@ class MovieApp:
         print("Website generated successfully as 'movie_list.html'.")
 
     def run(self):
-        """Run the main loop for the movie app."""
+        """Run the main loop for the movie app.
+
+        Displays a menu for the user to list movies, add a new movie, or quit the app.
+        """
         while True:
             print("\nMenu:")
             print("1. List Movies")
             print("2. Add Movie")
-            print("3. Quit")
+            print("3. Generate Website")
+            print("4. Quit")
 
             choice = input("Enter your choice: ")
 
@@ -143,10 +153,9 @@ class MovieApp:
             elif choice == "2":
                 self._command_add_movie()
             elif choice == "3":
+                self._generate_website()
+            elif choice == "4":
                 print("Exiting the app.")
                 break
             else:
                 print("Invalid choice, try again.")
-
-
-

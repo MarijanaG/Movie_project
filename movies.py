@@ -125,6 +125,8 @@ def update_movies(movies):
     return movies
 
 
+from statistics import median
+
 def rating_statistics(movies):
     """
     Calculate and display statistics for movie ratings.
@@ -136,16 +138,24 @@ def rating_statistics(movies):
         print("No movies found.")
         return
 
-    ratings = [movie_data['rating'] for movie_data in movies.values()]
+    # Filter valid ratings
+    ratings = [movie_data['rating'] for movie_data in movies.values() if movie_data['rating'] is not None]
+    if not ratings:
+        print("No valid ratings found.")
+        return
+
+    # Calculate statistics
     average_rating = sum(ratings) / len(ratings)
     median_rating = median(ratings)
     best_movie = max(movies, key=lambda x: movies[x]['rating'])
     worst_movie = min(movies, key=lambda x: movies[x]['rating'])
 
+    # results
     print(f"\nAverage rating: {average_rating:.2f}")
     print(f"Median rating: {median_rating:.2f}")
     print(f"Best movie: {best_movie} - Rating: {movies[best_movie]['rating']}")
     print(f"Worst movie: {worst_movie} - Rating: {movies[worst_movie]['rating']}")
+
 
 
 def random_movie(movies):
@@ -185,6 +195,9 @@ def search_movie(movies):
     if not found:
         print(f"No movie found with '{movie_name}' in its title.")
 
+def sort_movie_by_year(movies):
+    sorted_movies_year = sorted(movies.items(), key=lambda x: x[1]['year'], reverse=True)
+    return sorted_movies_year
 
 def sort_movie_by_rating(movies):
     """
@@ -201,6 +214,7 @@ def sort_movie_by_rating(movies):
 
 
 def initialize_movies(storage):
+
     """
     Initialize the movie collection by loading data from storage.
 
@@ -233,6 +247,7 @@ def main(storage):
               "7. Search Movie\n"
               "8. Movies sorted by rating\n"
               "9. Generate website\n"
+              "10. Sorted by year"
               )
 
         user_choice = input("Choose from the menu: ").strip()
@@ -258,6 +273,11 @@ def main(storage):
                 print(f"{movie}: {details['rating']} (Year: {details['year']})")
         elif user_choice == "9":
             generate_website(movies)
+        elif user_choice =="10":
+            year_movies = sort_movie_by_year(movies)
+            for movie, details in year_movies:
+                print(f"{movie}: {details['rating']} (Year: {details['year']})")
+
 
         elif user_choice == "0":
             print("Saving changes and exiting...")

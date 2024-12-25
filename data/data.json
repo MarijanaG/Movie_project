@@ -38,5 +38,13 @@
     "Star Wars: Episode V": {
         "rating": 8.7,
         "year": 1980
+    },
+    "new_movie": {
+        "title": "New Movie",
+        "year": 2024
+    },
+    "Harry Potter": {
+        "rating": 10.0,
+        "year": 2001
     }
 }

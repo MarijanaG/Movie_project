@@ -1,10 +1,10 @@
+# storage_csv.py
 import csv
 from storage.istorage import IStorage
 
 
 class StorageCsv(IStorage):
     def __init__(self, file_path):
-        """Initialize with the path to the CSV file."""
         self.file_path = file_path
 
     def list_movies(self):
@@ -15,9 +15,14 @@ class StorageCsv(IStorage):
                 reader = csv.DictReader(file)
                 for row in reader:
                     title = row['title']
+                    try:
+                        year = int(row['year'])
+                    except ValueError:
+                        year = row['year']
+
                     movies[title] = {
                         'rating': float(row['rating']),
-                        'year': int(row['year']),
+                        'year': year,
                         'poster': row['poster']
                     }
         except FileNotFoundError:
@@ -37,22 +42,12 @@ class StorageCsv(IStorage):
                 'poster': poster
             })
 
-
     def delete_movie(self, title):
         """Delete a movie from the CSV file."""
         movies = self.list_movies()
         if title in movies:
             del movies[title]
-            with open(self.file_path, mode='w', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=['title', 'year', 'rating', 'poster'])
-                writer.writeheader()
-                for movie_title, movie_data in movies.items():
-                    writer.writerow({
-                        'title': movie_title,
-                        'year': movie_data['year'],
-                        'rating': movie_data['rating'],
-                        'poster': movie_data['poster']
-                    })
+            self.save_movies(movies)  # Save updated movies after deletion
             print(f"Movie '{title}' deleted successfully.")
         else:
             print(f"Movie '{title}' not found.")
@@ -62,17 +57,21 @@ class StorageCsv(IStorage):
         movies = self.list_movies()
         if title in movies:
             movies[title]['rating'] = rating
-            with open(self.file_path, mode='w', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=['title', 'year', 'rating', 'poster'])
-                writer.writeheader()
-                for movie_title, movie_data in movies.items():
-                    writer.writerow({
-                        'title': movie_title,
-                        'year': movie_data['year'],
-                        'rating': movie_data['rating'],
-                        'poster': movie_data['poster']
-                    })
+            self.save_movies(movies)  # Save updated movies after update
             print(f"Movie '{title}' updated successfully.")
         else:
             print(f"Movie '{title}' not found.")
 
+    def save_movies(self, movies):
+        """Save the movies back to the CSV file."""
+        with open(self.file_path, mode='w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=['title', 'year', 'rating', 'poster'])
+            writer.writeheader()
+            for movie_title, movie_data in movies.items():
+                writer.writerow({
+                    'title': movie_title,
+                    'year': movie_data['year'],
+                    'rating': movie_data['rating'],
+                    'poster': movie_data['poster']
+                })
+        print("Movies saved to the CSV file.")

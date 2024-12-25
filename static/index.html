@@ -12,10 +12,14 @@
     </header>
     <main>
         <div class="movie-grid">
-            <!-- Movie grid will be inserted here -->
-            <div class='movie'><h3>The Matrix</h3><p>1999</p></div>
-<div class='movie'><h3>Inception</h3><p>2010</p></div>
-
+            <!-- Movie grid will be dynamically generated -->
+            {% for movie in movies %}
+                <div class="movie">
+                    <h3>{{ movie.title }}</h3>
+                    <p>{{ movie.year }}</p>
+                    <img src="{{ movie.poster }}" alt="{{ movie.title }} poster" class="movie-poster">
+                </div>
+            {% endfor %}
         </div>
     </main>
 </body>

@@ -1,36 +1,67 @@
 import json
 import random
 from statistics import median
-from storage.istorage import IStorage
-from storage.storage_json import StorageJson
-from web_generator import generate_website
+import os
+import requests
+from storage import storage_json
+from dotenv import load_dotenv
 
-
+load_dotenv()
 
 JSON_FILE = "data/data.json"
 
+class MovieClass:
+    def __init__(self, storage):
+        self.storage = storage
+
+    def fetch_movie_data(self, title):
+        """
+        Fetch movie data from the OMDb API based on the movie title.
+        """
+        url = f"{self.api_url}?t={title}&apikey={self.api_key}"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('Response') == 'True':
+                return {
+                    'Title': data.get('Title'),
+                    'Year': data.get('Year'),
+                    'Rating': data.get('imdbRating'),
+                    'Plot': data.get('Plot')
+                }
+            else:
+                print(f"Movie '{title}' not found.")
+                return None
+        else:
+            print("Error fetching data from API.")
+            return None
+
+    def save_movie_to_storage(self, movie_data):
+        """
+        Save movie data to storage (JSON file).
+        """
+        if movie_data:
+            movies = self.storage.get_movies()
+            movies[movie_data['Title']] = {
+                'rating': movie_data['Rating'],
+                'year': movie_data['Year'],
+                'plot': movie_data['Plot']
+            }
+            self.storage.save_movies(movies)
+            print(f"Movie '{movie_data['Title']}' added to storage.")
 
 def load_movies_from_storage():
     """
     Load movies from the JSON storage.
-
-    Returns:
-        dict: A dictionary of movies.
     """
     with open(JSON_FILE, 'r') as file:
         movies = json.load(file)
     return movies
 
-
 def list_movie(movies):
     """
     List all movies and their details in a formatted way.
-
-    Args:
-        movies (dict): The dictionary of movies.
-
-    Returns:
-        list: A list of movie details as strings.
     """
     movie_list = []
     for title, details in movies.items():
@@ -38,16 +69,9 @@ def list_movie(movies):
         movie_list.append(movie_info)
     return movie_list
 
-
-def add_movie(movies):
+def add_movie(movies, storage):
     """
     Add a new movie to the collection.
-
-    Args:
-        movies (dict): The current movie dictionary.
-
-    Returns:
-        dict: Updated movie dictionary.
     """
     key = input("Please enter the movie title: ").strip()
     while not key:
@@ -70,18 +94,15 @@ def add_movie(movies):
 
     movies[key] = {"rating": value, "year": year_movie}
     print(f"Successfully added movie '{key}' with a rating of {value} and year {year_movie}")
-    return movies
 
+    # Save to storage
+    storage.save_movies(movies)
+
+    return movies
 
 def delete_movie(movies):
     """
     Delete a movie from the collection.
-
-    Args:
-        movies (dict): The current movie dictionary.
-
-    Returns:
-        dict: Updated movie dictionary.
     """
     key = input("Please enter the movie you want to delete: ").strip()
     if key in movies:
@@ -91,16 +112,9 @@ def delete_movie(movies):
         print(f"Movie '{key}' is not in the list.")
     return movies
 
-
 def update_movies(movies):
     """
     Update the rating and year of an existing movie.
-
-    Args:
-        movies (dict): The current movie dictionary.
-
-    Returns:
-        dict: Updated movie dictionary.
     """
     movie_update = input("Please enter the movie you want to update: ").strip()
     if movie_update in movies:
@@ -124,15 +138,9 @@ def update_movies(movies):
         print(f"Movie '{movie_update}' not found in the database.")
     return movies
 
-
-from statistics import median
-
 def rating_statistics(movies):
     """
     Calculate and display statistics for movie ratings.
-
-    Args:
-        movies (dict): The current movie dictionary.
     """
     if not movies:
         print("No movies found.")
@@ -156,17 +164,9 @@ def rating_statistics(movies):
     print(f"Best movie: {best_movie} - Rating: {movies[best_movie]['rating']}")
     print(f"Worst movie: {worst_movie} - Rating: {movies[worst_movie]['rating']}")
 
-
-
 def random_movie(movies):
     """
     Select and display a random movie from the collection.
-
-    Args:
-        movies (dict): The current movie dictionary.
-
-    Returns:
-        tuple: The randomly selected movie.
     """
     if not movies:
         print("No movies available.")
@@ -176,13 +176,9 @@ def random_movie(movies):
     print(f"Randomly selected movie: {movie[0]} with a rating of {movie[1]['rating']}")
     return movie
 
-
 def search_movie(movies):
     """
     Search for a movie by name in the collection.
-
-    Args:
-        movies (dict): The current movie dictionary.
     """
     movie_name = input("Please enter the movie you want to search: ").strip().lower()
 
@@ -196,100 +192,15 @@ def search_movie(movies):
         print(f"No movie found with '{movie_name}' in its title.")
 
 def sort_movie_by_year(movies):
+    """
+    Sort movies by release year.
+    """
     sorted_movies_year = sorted(movies.items(), key=lambda x: x[1]['year'], reverse=True)
     return sorted_movies_year
 
 def sort_movie_by_rating(movies):
     """
     Sort movies by rating in descending order.
-
-    Args:
-        movies (dict): The current movie dictionary.
-
-    Returns:
-        list: A sorted list of movies by rating.
     """
     sorted_movies = sorted(movies.items(), key=lambda x: x[1]['rating'], reverse=True)
     return sorted_movies
-
-
-def initialize_movies(storage):
-
-    """
-    Initialize the movie collection by loading data from storage.
-
-    Args:
-        storage (IStorage): The storage system to use.
-
-    Returns:
-        dict: A dictionary of movies.
-    """
-    return storage.list_movies()
-
-
-def main(storage):
-    """
-    Main function to run the movie application.
-
-    Args:
-        storage (IStorage): The storage system to use.
-    """
-    movies = initialize_movies(storage)
-
-    while True:
-        print("\n0. Exit\n"
-              "1. List Movies\n"
-              "2. Add Movie\n"
-              "3. Delete Movie\n"
-              "4. Update Movie\n"
-              "5. Statistics\n"
-              "6. Random Movie\n"
-              "7. Search Movie\n"
-              "8. Movies sorted by rating\n"
-              "9. Generate website\n"
-              "10. Sorted by year"
-              )
-
-        user_choice = input("Choose from the menu: ").strip()
-        if user_choice == "1":
-            movie_list = list_movie(movies)
-            for movie in movie_list:
-                print(movie)
-        elif user_choice == "2":
-            movies = add_movie(movies)
-        elif user_choice == "3":
-            movies = delete_movie(movies)
-        elif user_choice == "4":
-            movies = update_movies(movies)
-        elif user_choice == "5":
-            rating_statistics(movies)
-        elif user_choice == "6":
-            random_movie(movies)
-        elif user_choice == "7":
-            search_movie(movies)
-        elif user_choice == "8":
-            sorted_movies = sort_movie_by_rating(movies)
-            for movie, details in sorted_movies:
-                print(f"{movie}: {details['rating']} (Year: {details['year']})")
-        elif user_choice == "9":
-            generate_website(movies)
-        elif user_choice =="10":
-            year_movies = sort_movie_by_year(movies)
-            for movie, details in year_movies:
-                print(f"{movie}: {details['rating']} (Year: {details['year']})")
-
-
-        elif user_choice == "0":
-            print("Saving changes and exiting...")
-            storage.add_movie(movies)
-            break
-        else:
-            print("Invalid input. Please choose again.")
-
-
-# The storage system you want to use
-storage = StorageJson('movies.json')
-
-# Running the main program
-if __name__ == "__main__":
-    main(storage)

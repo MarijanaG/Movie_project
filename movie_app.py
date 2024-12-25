@@ -2,10 +2,13 @@ import requests
 import os
 from dotenv import load_dotenv
 import movie_storage
-from movies import storage
+from storage.storage_csv import StorageCsv
 
 # Load environment variables from .env file
 load_dotenv()
+
+api_key = os.getenv("OMDB_API_KEY")
+
 
 class MovieApp:
     def __init__(self, storage):
@@ -15,6 +18,10 @@ class MovieApp:
             storage: An instance of the storage class for managing movies.
         """
         self._storage = storage
+
+    def run(self):
+        movies = self.storage.list_movies()
+        print(movies)
 
     def _command_list_movies(self):
         """List all movies in the storage.

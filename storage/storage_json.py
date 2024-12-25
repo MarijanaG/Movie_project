@@ -1,39 +1,20 @@
 import json
-
+import os
 
 class StorageJson:
-    """
-    A class to handle movie storage in JSON format.
-    """
-
     def __init__(self, file_path):
-        """
-        Initialize the storage with the given file path.
-
-        Args:
-            file_path (str): Path to the JSON file for storage.
-        """
         self.file_path = file_path
+        if not os.path.exists(self.file_path):
+            # Create an empty file if it doesn't exist
+            with open(self.file_path, 'w') as file:
+                json.dump({}, file)
 
-    def list_movies(self):
-        """
-        List all movies stored in the JSON file.
-
-        Returns:
-            dict: A dictionary of movies or an empty dictionary if the file doesn't exist.
-        """
-        try:
-            with open(self.file_path, 'r') as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {}
+    def get_movies(self):
+        """Retrieve movies from the storage (JSON file)."""
+        with open(self.file_path, 'r') as file:
+            return json.load(file)
 
     def save_movies(self, movies):
-        """
-        Save the current movie collection to the JSON file.
-
-        Args:
-            movies (dict): The dictionary of movies to save.
-        """
+        """Save the updated list of movies to the JSON file."""
         with open(self.file_path, 'w') as file:
             json.dump(movies, file, indent=4)

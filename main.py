@@ -1,13 +1,15 @@
-from storage.storage_json import StorageJson
-from movies import main as movies_main
+from movie_app import MovieApp
+from storage.storage_csv import StorageCsv
 
 
 def main():
     """
-    Main function to initialize the movie storage and run the movie management application.
+    Main function to initialize the storage and the MovieApp instance,
+    and start running the application.
     """
-    storage = StorageJson('data/data.json')
-    movies_main(storage)
+    storage = StorageCsv('data/storage.csv')
+    app = MovieApp(storage)
+    app.run()
 
 
 if __name__ == "__main__":

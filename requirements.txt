@@ -1,2 +1,4 @@
 flask==2.2.3            # Web framework for creating web applications
 requests==2.31.0        # For making HTTP requests if needed (optional)
+python-dotenv>=0.19.0
+

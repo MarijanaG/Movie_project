@@ -1,24 +1,33 @@
 import json
 import random
 from statistics import median
-import os
 import requests
-from storage import storage_json
 from dotenv import load_dotenv
+import os
 
+# Load environment variables from .env file
 load_dotenv()
 
+# Constants for the API URL and API key
+OMDB_API_KEY = os.getenv('OMDB_API_KEY')
+API_URL = "http://www.omdbapi.com/"
+
+# Path to JSON file where movie data will be stored
 JSON_FILE = "data/data.json"
 
 class MovieClass:
     def __init__(self, storage):
         self.storage = storage
+        # Ensure API key and URL are loaded correctly
+        if not OMDB_API_KEY:
+            raise ValueError("OMDB API key is missing.")
+        self.api_url = API_URL
 
     def fetch_movie_data(self, title):
         """
         Fetch movie data from the OMDb API based on the movie title.
         """
-        url = f"{self.api_url}?t={title}&apikey={self.api_key}"
+        url = f"{self.api_url}?t={title}&apikey={OMDB_API_KEY}"
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -51,14 +60,29 @@ class MovieClass:
             self.storage.save_movies(movies)
             print(f"Movie '{movie_data['Title']}' added to storage.")
 
-def load_movies_from_storage():
-    """
-    Load movies from the JSON storage.
-    """
-    with open(JSON_FILE, 'r') as file:
-        movies = json.load(file)
-    return movies
+# Assuming a Storage class for managing movie data
+class Storage:
+    def __init__(self, file_path=JSON_FILE):
+        self.file_path = file_path
 
+    def get_movies(self):
+        """
+        Load movies from the JSON file.
+        """
+        try:
+            with open(self.file_path, 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}
+
+    def save_movies(self, movies):
+        """
+        Save the movies to the JSON file.
+        """
+        with open(self.file_path, 'w') as file:
+            json.dump(movies, file, indent=4)
+
+# Utility Functions
 def list_movie(movies):
     """
     List all movies and their details in a formatted way.
